@@ -30,9 +30,10 @@ app.use('/uploads', express.static('uploads'));
 
 app.use('/upload', uploadRoutes);
 
-app.get('/', (req, res) => {
-  res.send('Hello');
-});
+
+app.get('/app', (req, res) => {
+  res.send('Hello')
+})
 
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
