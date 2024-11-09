@@ -1,5 +1,4 @@
-import { config } from 'dotenv';
-config();
+import dotenv from 'dotenv';
+dotenv.config();
 
-export const PORT = process.env.PORT || 3000;
-export const CORS_ORIGIN = process.env.CORS_ORIGIN || 'https://video-vercel.vercel.app';
+export const port = process.env.PORT || 5000;
