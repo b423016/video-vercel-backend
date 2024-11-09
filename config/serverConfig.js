@@ -1,5 +1,7 @@
-import dotenv from 'dotenv';
+const dotenv = require('dotenv');
 dotenv.config();
 
-export const SERVER_PORT = process.env.PORT || 5000;
-export const UPLOAD_DIR = 'uploads';
+module.exports = {
+  PORT: process.env.PORT || 3000,
+  CORS_ORIGIN: process.env.CORS_ORIGIN || 'https://yvideo-vercel.vercel.app',
+};

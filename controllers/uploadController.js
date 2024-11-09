@@ -5,7 +5,6 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Setup storage for multer
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, path.join(__dirname, '../uploads'));
@@ -16,10 +15,9 @@ const storage = multer.diskStorage({
   }
 });
 
-// Multer middleware
 const upload = multer({
   storage,
-  limits: { fileSize: 50 * 1024 * 1024 }, // Limit file size to 50MB
+  limits: { fileSize: 256 * 1024 * 1024 }, 
   fileFilter: (req, file, cb) => {
     if (file.mimetype.startsWith('video/')) {
       cb(null, true);
@@ -29,7 +27,6 @@ const upload = multer({
   }
 });
 
-// Controller function to handle upload
 export const handleVideoUpload = (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'No file uploaded' });

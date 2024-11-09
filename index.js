@@ -1,16 +1,18 @@
-import express from 'express';
-import uploadRoutes from './routes/uploadRoutes.js';
-import { config } from 'dotenv';
-
-config();
+import express, { json } from 'express';
+import cors from 'cors';
+import { PORT, CORS_ORIGIN } from './config/serverConfig';
+import uploadRoutes from './routes/uploadRoutes';
 
 const app = express();
 
-app.use('/uploads', express.static('uploads'));
+app.use(cors({
+  origin: CORS_ORIGIN,
+  credentials: true
+}));
+app.use(json());
 
-app.use('/api/upload', uploadRoutes);
+app.use('/api', uploadRoutes);
 
-const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
