@@ -1,7 +1,5 @@
-const dotenv = require('dotenv');
-dotenv.config();
+import { config } from 'dotenv';
+config();
 
-module.exports = {
-  PORT: process.env.PORT || 3000,
-  CORS_ORIGIN: process.env.CORS_ORIGIN || 'https://yvideo-vercel.vercel.app',
-};
+export const PORT = process.env.PORT || 3000;
+export const CORS_ORIGIN = process.env.CORS_ORIGIN || 'https://video-vercel.vercel.app';
