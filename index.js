@@ -31,7 +31,7 @@ app.use('/uploads', express.static('uploads'));
 
 app.use('/upload', uploadRoutes);
 
-app.get('/', (req, res) => {
+app.get('/app', (req, res) => {
   res.send('Hello')
 })
 
