@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="3f65bc3d-9b85-41f7-8384-17b0994476e9" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/../chatbot/chat.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../chatbot/genai.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../chatbot/sentiment_analysis.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../final_proj/create_project.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../final_proj/stock-prediction-and-user-bias-analysis/backend/app/services/gpt_model.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/utils/scene_detection.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/utils/video_utils.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/requiremnets.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/structure.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Untitled1.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/../../Untitled1.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Untitled6.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/../../Untitled6.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Text-Summarizer" beforeDir="false" afterPath="$PROJECT_DIR$/../Text-Summarizer" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../logs/events.out.tfevents.1726743616.AYUSH.11972.0" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../logs/events.out.tfevents.1726743657.AYUSH.11972.1" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../logs/events.out.tfevents.1726743840.AYUSH.11972.2" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../logs/events.out.tfevents.1726744041.AYUSH.11972.3" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../logs/events.out.tfevents.1726744862.AYUSH.11972.4" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../logs/events.out.tfevents.1726746249.AYUSH.11972.5" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../logs/events.out.tfevents.1726922684.AYUSH.12296.0" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../medizin/.idea/inspectionProfiles/profiles_settings.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../medizin/.idea/medizin.iml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../medizin/.idea/misc.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../medizin/.idea/modules.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../medizin/.idea/vcs.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../medizin/.idea/workspace.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../medizin/Medizin" beforeDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/../.." />
+  </component>
+  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
+  "lastFilter": {
+    "state": "OPEN",
+    "assignee": "b423016"
+  }
+}]]></component>
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/b423016/legal_doc.git",
+    "accountId": "2711b8aa-146b-4ce2-a725-b90d3c3f58a6"
+  }
+}]]></component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="QODANA_PROBLEMS_VIEW_TAB" />
+  </component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "associatedIndex": 5
+}]]></component>
+  <component name="ProjectId" id="2pnCTNceesF5Ws9eAzp0B0GgXvH" />
+  <component name="ProjectViewState">
+    <option name="autoscrollToSource" value="true" />
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Python.structure.executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "git-widget-placeholder": "main",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="QodanaHighlightedReportService">
+    <option name="localRunNotPublishedPersistedInfo">
+      <LocalReportPersistedInfo>
+        <option name="path" value="C:\Users\ayush\AppData\Local\Temp\qodana_output\qodana.sarif.json" />
+        <option name="reportGuid" value="f276e9bf-009d-4b79-86a1-d9c0be3b453f" />
+        <option name="reportName" value="thumbnail/qodana/2024-12-05" />
+      </LocalReportPersistedInfo>
+    </option>
+  </component>
+  <component name="QodanaIsSelectedPersistenceService">
+    <option name="selectedOrLoading" value="true" />
+  </component>
+  <component name="QodanaReportsService">
+    <option name="descriptions">
+      <ReportDescription localRun="true" path="C:\Users\ayush\AppData\Local\Temp\qodana_output\qodana.sarif.json" reportGuid="f276e9bf-009d-4b79-86a1-d9c0be3b453f" reportId="thumbnail/qodana/2024-12-05" />
+    </option>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-js-predefined-1d06a55b98c1-0b3e54e931b4-JavaScript-PY-241.17890.14" />
+        <option value="bundled-python-sdk-5b207ade9991-7e9c3bbb6e34-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-241.17890.14" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="3f65bc3d-9b85-41f7-8384-17b0994476e9" name="Changes" comment="" />
+      <created>1733392461190</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1733392461190</updated>
+      <workItem from="1733392463011" duration="4428000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/thumbnail$structure.coverage" NAME="structure Coverage Results" MODIFIED="1733392752261" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+  </component>
+</project>

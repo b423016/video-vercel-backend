@@ -1,0 +1,14 @@
+fastapi==0.109.0
+uvicorn==0.24.0
+python-multipart==0.0.9
+opencv-python==4.9.0.80
+moviepy==1.0.3
+pillow==10.2.0
+torch==2.1.2
+torchvision==0.16.2
+transformers==4.38.1
+scikit-image==0.22.0
+scikit-video==1.1.11
+matplotlib==3.8.3
+emoji==2.1.0
+paddleocr==2.7.0
