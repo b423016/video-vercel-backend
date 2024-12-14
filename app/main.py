@@ -1,57 +1,43 @@
 import os
 import uuid
-from fastapi import FastAPI, File, UploadFile, HTTPException
+import zipfile
+from fastapi import FastAPI, File, UploadFile, HTTPException, BackgroundTasks
 from fastapi.responses import FileResponse, JSONResponse
-from typing import List
+from fastapi.middleware.cors import CORSMiddleware
+from typing import Optional, Tuple
 import shutil
-
+from pydantic import BaseModel
+import uvicorn
 from app.video_processing import VideoProcessor
 from app.image_editing import ImageEditor
-from app.models import ThumbnailResponse, EditThumbnailRequest
 
 app = FastAPI(title="Thumbnail Generator")
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
+)
 
 # Ensure directories exist
 os.makedirs('videos', exist_ok=True)
 os.makedirs('thumbnails', exist_ok=True)
+os.makedirs('zipped_thumbnails', exist_ok=True)
 
 video_processor = VideoProcessor()
 image_editor = ImageEditor()
 
 
-@app.post("/generate_thumbnails/")
-async def generate_thumbnails(file: UploadFile = File(...)):
-    """
-    Generate 5 random thumbnails from an uploaded video
-    """
-    # Save uploaded video
-    video_path = os.path.join('videos', f"{uuid.uuid4()}_{file.filename}")
-    with open(video_path, 'wb') as buffer:
-        shutil.copyfileobj(file.file, buffer)
-
-    try:
-        # Generate thumbnails
-        thumbnails = video_processor.extract_thumbnails(video_path)
-
-        # Save generated thumbnails
-        thumbnail_paths = []
-        for i, thumbnail in enumerate(thumbnails):
-            thumbnail_path = os.path.join('thumbnails', f'thumbnail_{i + 1}.jpg')
-            thumbnail.save(thumbnail_path)
-            thumbnail_paths.append(thumbnail_path)
-
-        return JSONResponse(content={
-            "thumbnails": [
-                {
-                    "id": i + 1,
-                    "path": path,
-                    "emotions": video_processor.detect_frame_emotions(path)
-                }
-                for i, path in enumerate(thumbnail_paths)
-            ]
-        })
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+class EditThumbnailRequest(BaseModel):
+    thumbnail_path: str
+    text: Optional[str] = None
+    font_size: Optional[int] = 40
+    text_color: Optional[Tuple[int, int, int]] = (255, 255, 255)
+    brightness_adjustment: Optional[float] = 0
+    upscale: Optional[bool] = True
 
 
 @app.post("/edit_thumbnail/")
@@ -61,12 +47,12 @@ async def edit_thumbnail(request: EditThumbnailRequest):
     """
     try:
         edited_image = image_editor.edit_thumbnail(
-            request.thumbnail_path,
-            emoji=request.emoji,
+            thumbnail_path=request.thumbnail_path,
             text=request.text,
-            font_path=request.font_path,
             font_size=request.font_size,
-            brightness_adjustment=request.brightness
+            text_color=request.text_color,
+            brightness_adjustment=request.brightness_adjustment,
+            upscale=request.upscale
         )
 
         # Save edited image
@@ -76,6 +62,51 @@ async def edit_thumbnail(request: EditThumbnailRequest):
         return {"edited_thumbnail_path": edited_path}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/generate_thumbnails/")
+async def generate_thumbnails(file: UploadFile = File(...)):
+    """
+    Generate 5 random thumbnails from an uploaded video
+    """
+    video_path = os.path.join('videos', f"{uuid.uuid4()}_{file.filename}")
+    with open(video_path, 'wb') as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    try:
+        # Generate thumbnails
+        thumbnail_tuples = video_processor.extract_thumbnails(video_path)
+
+        # Save generated thumbnails
+        thumbnail_paths = []
+        for i, (thumbnail, _) in enumerate(thumbnail_tuples):  # Unpack the tuple here
+            thumbnail_path = os.path.join('thumbnails', f'thumbnail_{i + 1}.jpg')
+            thumbnail.save(thumbnail_path)  # Save the PIL Image directly
+            thumbnail_paths.append(thumbnail_path)
+
+        # Create a zip file of thumbnails
+        zip_filename = f"thumbnails_{uuid.uuid4()}.zip"
+        zip_path = os.path.join('zipped_thumbnails', zip_filename)
+        with zipfile.ZipFile(zip_path, 'w') as zipf:
+            for thumbnail_path in thumbnail_paths:
+                zipf.write(thumbnail_path, os.path.basename(thumbnail_path))
+
+        return JSONResponse(content={
+            "thumbnails": [
+                {
+                    "id": i + 1,
+                    "path": path
+                }
+                for i, path in enumerate(thumbnail_paths)
+            ],
+            "zip_filename": os.path.basename(zip_path)
+        })
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        # Clean up the original video file
+        if os.path.exists(video_path):
+            os.remove(video_path)
 
 
 @app.get("/thumbnail/{filename}")
@@ -89,7 +120,22 @@ async def get_thumbnail(filename: str):
     return FileResponse(thumbnail_path)
 
 
-if __name__ == "__main__":
-    import uvicorn
+@app.get("/download_zip/{filename}")
+async def download_zip(filename: str, background_tasks: BackgroundTasks):
+    """
+    Serve the zip file of thumbnails and delete it after download
+    """
+    zip_path = os.path.join('zipped_thumbnails', filename)
+    if not os.path.exists(zip_path):
+        raise HTTPException(status_code=404, detail="Zip file not found")
 
+    background_tasks.add_task(os.remove, zip_path)
+    return FileResponse(
+        zip_path,
+        media_type="application/zip",
+        filename=filename
+    )
+
+
+if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

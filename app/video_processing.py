@@ -4,35 +4,20 @@ from typing import List
 from PIL import Image
 import torch
 from torchvision import transforms
-from transformers import AutoFeatureExtractor, AutoModelForImageClassification, ResNetModel, AutoModel
-import torch.nn.functional as F
+from torchvision.models import mobilenet_v2
+from multiprocessing import Pool
 
 
 class VideoProcessor:
     def __init__(self):
-        # Initialize scene detection and emotion detection models
-        self.scene_detection_model = cv2.createBackgroundSubtractorMOG2()
+        # Initialize lightweight feature extraction model (MobileNetV2)
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.feature_model = mobilenet_v2(pretrained=True).features.eval().to(self.device)
 
-        # Pretrained emotion detection model
-        self.emotion_model_name = "dima806/facial_emotions_image_detection"
-        self.emotion_extractor = AutoFeatureExtractor.from_pretrained(self.emotion_model_name)
-        self.emotion_model = AutoModelForImageClassification.from_pretrained(self.emotion_model_name)
-
-        # Additional feature extraction models
-        self.feature_extractors = [
-            # ResNet model for feature extraction
-            {
-                'model': ResNetModel.from_pretrained('microsoft/resnet-50'),
-                'name': 'resnet50',
-                'input_size': (224, 224)
-            },
-            # Another pre-trained vision transformer
-            {
-                'model': AutoModel.from_pretrained('google/vit-base-patch16-224'),
-                'name': 'vision_transformer',
-                'input_size': (224, 224)
-            }
-        ]
+        # Pre-trained emotion model (ResNet18 fine-tuned for emotion recognition)
+        self.emotion_model = torch.hub.load('pytorch/vision:v0.10.0', 'resnet18', pretrained=True)
+        self.emotion_model.fc = torch.nn.Linear(self.emotion_model.fc.in_features, 7)  # 7 emotion classes
+        self.emotion_model.eval().to(self.device)
 
         # Transformation for model input
         self.transform = transforms.Compose([
@@ -41,113 +26,78 @@ class VideoProcessor:
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ])
 
-    def _extract_features_with_multiple_models(self, frame: np.ndarray) -> np.ndarray:
+    def _extract_features_batch(self, frames: List[np.ndarray]) -> np.ndarray:
+        tensors = torch.stack([
+            self.transform(Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))) for frame in frames
+        ]).to(self.device)
+
+        with torch.no_grad():
+            features = self.feature_model(tensors).mean([2, 3]).cpu().numpy()  # Global average pooling
+
+        return features
+
+    def detect_frame_emotions(self, frames: List[np.ndarray]) -> List[str]:
         """
-        Extract features from a frame using multiple pre-trained models
+        Detect emotions in a batch of video frames.
 
         Args:
-            frame (np.ndarray): Input frame
+            frames (List[np.ndarray]): List of input frames (BGR format)
 
         Returns:
-            np.ndarray: Combined feature vector
+            List[str]: List of predicted emotions for each frame
         """
-        # Convert frame to PIL Image
-        pil_image = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+        emotion_labels = ['Angry', 'Disgust', 'Fear', 'Happy', 'Sad', 'Surprise', 'Neutral']
 
-        # Aggregate features from multiple models
-        combined_features = []
+        tensors = torch.stack([
+            self.transform(Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))) for frame in frames
+        ]).to(self.device)
 
-        for extractor in self.feature_extractors:
-            # Prepare input for the model
-            inputs = self.transform(pil_image).unsqueeze(0)
+        with torch.no_grad():
+            outputs = self.emotion_model(tensors)
+            predictions = torch.argmax(outputs, dim=1).cpu().numpy()
 
-            # Extract features
-            with torch.no_grad():
-                if extractor['name'] == 'resnet50':
-                    outputs = extractor['model'](inputs)
-                    features = outputs.pooler_output.squeeze().numpy()
-                elif extractor['name'] == 'vision_transformer':
-                    outputs = extractor['model'](inputs)
-                    features = outputs.last_hidden_state.mean(dim=1).squeeze().numpy()
+        return [emotion_labels[pred] for pred in predictions]
 
-                # Normalize features
-                features = features / np.linalg.norm(features)
-                combined_features.append(features)
-
-        # Combine features from different models
-        combined_features = np.concatenate(combined_features)
-        return combined_features
-
-    def _calculate_frame_importance(self, video_path: str) -> List[float]:
-        """
-        Calculate frame importance scores using multiple AI models
-
-        Args:
-            video_path (str): Path to the video file
-
-        Returns:
-            List[float]: Importance scores for each frame
-        """
+    def _calculate_frame_importance(self, video_path: str, frame_interval: int) -> List[float]:
         cap = cv2.VideoCapture(video_path)
         total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         frame_scores = []
+        frames = []
 
-        for i in range(total_frames):
+        for i in range(0, total_frames, frame_interval):
+            cap.set(cv2.CAP_PROP_POS_FRAMES, i)
             ret, frame = cap.read()
             if not ret:
                 break
+            frames.append(frame)
 
-            # Extract features using multiple models
-            frame_features = self._extract_features_with_multiple_models(frame)
-
-            # Calculate importance score based on feature magnitude and diversity
-            feature_magnitude = np.linalg.norm(frame_features)
-            feature_entropy = self._calculate_feature_entropy(frame_features)
-
-            # Combined scoring mechanism
-            importance_score = feature_magnitude * feature_entropy
-            frame_scores.append(importance_score)
+            if len(frames) == 32 or i + frame_interval >= total_frames:  # Batch size: 32
+                batch_features = self._extract_features_batch(frames)
+                for features in batch_features:
+                    feature_magnitude = np.linalg.norm(features)
+                    frame_scores.append(feature_magnitude)
+                frames = []
 
         cap.release()
         return frame_scores
 
-    def _calculate_feature_entropy(self, features: np.ndarray) -> float:
+    def extract_thumbnails(self, video_path: str, num_thumbnails: int = 5, frame_interval: int = 30) -> List:
         """
-        Calculate entropy of feature vector to measure information content
-
-        Args:
-            features (np.ndarray): Input feature vector
-
-        Returns:
-            float: Entropy value
-        """
-        # Normalize features
-        normalized_features = features / np.linalg.norm(features)
-
-        # Calculate probability distribution
-        probabilities = np.abs(normalized_features)
-        probabilities /= probabilities.sum()
-
-        # Calculate entropy
-        entropy = -np.sum(probabilities * np.log2(probabilities + 1e-10))
-        return entropy
-
-    def extract_thumbnails(self, video_path: str, num_thumbnails: int = 5) -> List[Image.Image]:
-        """
-        Extract key frames from video using advanced AI-based techniques
+        Extract key frames and detect emotions for selected thumbnails.
 
         Args:
             video_path (str): Path to the video file
             num_thumbnails (int): Number of thumbnails to extract
+            frame_interval (int): Interval for frame extraction
 
         Returns:
-            List[Image.Image]: List of extracted thumbnails
+            List[Tuple[Image.Image, str]]: List of extracted thumbnails with emotions
         """
         cap = cv2.VideoCapture(video_path)
         total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
-        # AI-based frame selection
-        frame_importance = self._calculate_frame_importance(video_path)
+        # Calculate frame importance
+        frame_importance = self._calculate_frame_importance(video_path, frame_interval)
 
         # Select top N most important frames
         important_frame_indices = sorted(
@@ -158,43 +108,46 @@ class VideoProcessor:
 
         selected_frames = []
         for frame_index in important_frame_indices:
-            cap.set(cv2.CAP_PROP_POS_FRAMES, frame_index)
+            cap.set(cv2.CAP_PROP_POS_FRAMES, frame_index * frame_interval)
             ret, frame = cap.read()
             if ret:
-                selected_frames.append(Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)))
+                selected_frames.append(frame)
 
         cap.release()
-        return selected_frames
 
-    def detect_frame_emotions(self, image_path: str) -> dict:
-        """
-        Detect emotions in a frame
+        # Detect emotions for selected frames
+        emotions = self.detect_frame_emotions(selected_frames)
+        thumbnails = [
+            Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)) for frame in selected_frames
+        ]
 
-        Args:
-            image_path (str): Path to the image file
+        return list(zip(thumbnails, emotions))
 
-        Returns:
-            dict: Detected emotion and confidence
-        """
-        image = Image.open(image_path)
-        inputs = self.emotion_extractor(images=image, return_tensors="pt")
+    def process_in_parallel(self, video_path: str, num_thumbnails: int = 5, frame_interval: int = 30) -> List:
+        cap = cv2.VideoCapture(video_path)
+        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        frame_indices = list(range(0, total_frames, frame_interval))
 
-        with torch.no_grad():
-            outputs = self.emotion_model(**inputs)
-            logits = outputs.logits
-            predicted_class_idx = logits.argmax(-1).item()
+        def process_frame(index):
+            cap = cv2.VideoCapture(video_path)
+            cap.set(cv2.CAP_PROP_POS_FRAMES, index)
+            ret, frame = cap.read()
+            cap.release()
+            if not ret:
+                return None
+            return frame
 
-        emotions = {
-            0: "Angry",
-            1: "Disgust",
-            2: "Fear",
-            3: "Happy",
-            4: "Sad",
-            5: "Surprise",
-            6: "Neutral"
-        }
+        with Pool(processes=4) as pool:
+            frames = pool.map(process_frame, frame_indices)
 
-        return {
-            "emotion": emotions.get(predicted_class_idx, "Unknown"),
-            "confidence": float(torch.softmax(logits, dim=1).max())
-        }
+        frames = [frame for frame in frames if frame is not None]
+        return self.extract_thumbnails(video_path, num_thumbnails, frame_interval)
+
+
+# Example Usage
+# if __name__ == "__main__":
+#     video_processor = VideoProcessor()
+#     results = video_processor.extract_thumbnails_with_emotions("video.mp4", num_thumbnails=5, frame_interval=30)
+#     for idx, (thumbnail, emotion) in enumerate(results):
+#         thumbnail.save(f"thumbnail_{idx + 1}.jpg")
+#         print(f"Thumbnail {idx + 1}: Detected Emotion - {emotion}")
